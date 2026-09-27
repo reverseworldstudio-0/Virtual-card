@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Boltiye Yaadein - Payment Card</title>
+<style>
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  :root{
+    --gold:#e6c88a;
+    --paper:#f5efe2;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  body{
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:#050505;
+    font-family:'Segoe UI', Arial, sans-serif;
+    padding:24px 16px;
+    gap:18px;
+  }
+  .stage{ perspective:1600px; width:340px; max-width:100%; }
+  .card-inner{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    transform-style:preserve-3d;
+    transition:transform .7s cubic-bezier(.4,.2,.2,1);
+  }
+  .card-inner.flipped{ transform:rotateY(180deg); }
+
+  .frame{
+    position:absolute; inset:0;
+    border-radius:16px;
+    padding:6px;
+    backface-visibility:hidden;
+    background:linear-gradient(135deg, #f6e3ac 0%, #cda458 35%, #8a6a2e 55%, #e9cf8e 75%, #f6e3ac 100%);
+    box-shadow:0 20px 45px rgba(0,0,0,.65);
+  }
+  .frame.back{ transform:rotateY(180deg); }
+
+  .card{
+    width:100%;
+    height:100%;
+    border-radius:11px;
+    padding:12px 16px;
+    position:relative;
+    overflow:hidden;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 5px),
+      radial-gradient(130% 150% at 15% 0%, #5a1420 0%, #3d0d16 40%, #1c0509 78%, #0d0203 100%);
+    box-shadow:inset 0 0 0 1px rgba(230,200,138,0.3);
+    color:var(--paper);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .label{
+    color:var(--gold);
+    font-size:7.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    opacity:.95;
+    margin-bottom:1px;
+  }
+  .value{ font-size:11.5px; font-weight:600; letter-spacing:.02em; color:#fbf7ee; }
+
+  .top-grid{
+    display:grid;
+    grid-template-columns:1fr 84px;
+    grid-template-rows:auto auto auto;
+    row-gap:6px;
+    column-gap:12px;
+    align-items:center;
+  }
+  .qr-col{
+    grid-column:2; grid-row:1 / span 3;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .qr-wrap{
+    background:linear-gradient(135deg, #ffe9ad 0%, #e0b04a 40%, #a97c1e 75%, #ffe9ad 100%);
+    padding:5px;
+    border-radius:6px;
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+  }
+  .qr-wrap img{ display:block; width:78px; height:78px; }
+  .qr-caption{
+    font-size:6px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--gold);
+    opacity:.9;
+    text-align:center;
+    margin-top:2px;
+  }
+
+  .ifsc-row .field{ display:inline-block; }
+
+  .contact{
+    display:flex; justify-content:space-between; align-items:center;
+    padding-top:5px;
+    border-top:1px solid rgba(230,200,138,0.25);
+  }
+  .contact .value{ font-size:9.5px; font-weight:500; opacity:.95; }
+  .contact .label{ margin-bottom:0; }
+
+  .note{
+    display:flex; flex-direction:column;
+    padding-top:5px;
+    border-top:1px solid rgba(230,200,138,0.25);
+    font-size:7.3px;
+    letter-spacing:.02em;
+    color:var(--gold);
+    opacity:.85;
+    font-style:italic;
+    line-height:1.5;
+  }
+
+  .buttons{ display:flex; gap:10px; }
+  .btn{
+    padding:9px 16px;
+    border-radius:20px;
+    border:1px solid rgba(230,200,138,0.5);
+    background:rgba(230,200,138,0.08);
+    color:var(--gold);
+    font-size:12px;
+    letter-spacing:.03em;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .btn.active{
+    background:linear-gradient(135deg, #f6e3ac 0%, #cda458 60%, #8a6a2e 100%);
+    color:#241708;
+    font-weight:600;
+    border-color:transparent;
+  }
+
+  .copyright{
+    color:#8a8a8a;
+    font-size:11px;
+    text-align:center;
+    letter-spacing:.02em;
+    padding-bottom:4px;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="card-inner" id="cardInner">
+      <div class="frame front">
+        <div class="card">
+          <div class="top-grid">
+            <div class="field">
+              <div class="label">Account Holder</div>
+              <div class="value">Vivek Kumar</div>
+            </div>
+            <div class="field">
+              <div class="label">Account Number</div>
+              <div class="value">3816492642</div>
+            </div>
+            <div class="field">
+              <div class="label">Branch</div>
+              <div class="value">BASANTPUR</div>
+            </div>
+            <div class="qr-col">
+              <div class="qr-wrap">
+                <img src="data:image/png;base64,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" alt="QR code with account details">
+              </div>
+              <div class="qr-caption">Scan</div>
+            </div>
+          </div>
+          <div class="ifsc-row">
+            <div class="field">
+              <div class="label">IFSC</div>
+              <div class="value">CBIN0281274</div>
+            </div>
+          </div>
+          <div class="contact">
+            <div class="field">
+              <div class="label">Social</div>
+              <div class="value">@boltiyaadein</div>
+            </div>
+            <div class="field" style="text-align:right">
+              <div class="label">Contact</div>
+              <div class="value">boltiyaadein@gmail.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame back">
+        <div class="card">
+          <div class="top-grid">
+            <div class="field">
+              <div class="label">Business</div>
+              <div class="value">Bolti Yaadein</div>
+            </div>
+            <div class="field">
+              <div class="label">UPI ID</div>
+              <div class="value">boltiyaadein@ptyes</div>
+            </div>
+            <div class="field">
+              <div class="label">Contact &amp; Help</div>
+              <div class="value">+91 9155238235</div>
+            </div>
+            <div class="qr-col">
+              <div class="qr-wrap">
+                <img src="data:image/png;base64,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" alt="UPI payment QR code">
+              </div>
+              <div class="qr-caption">Scan &amp; Pay</div>
+            </div>
+          </div>
+          <div class="note">
+            <div>This number is only for contact — not linked with this bank</div>
+            <div>Scan &amp; pay using the UPI ID / QR given above only</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn active" id="btnFront">View Front Side</button>
+    <button class="btn" id="btnBack">View Back Side</button>
+  </div>
+
+  <div class="copyright">© 2026 Bolti Yaadein — सर्वाधिकार सुरक्षित (All Rights Reserved)</div>
+
+<script>
+  const inner = document.getElementById('cardInner');
+  const btnFront = document.getElementById('btnFront');
+  const btnBack = document.getElementById('btnBack');
+  function showFront(){
+    inner.classList.remove('flipped');
+    btnFront.classList.add('active');
+    btnBack.classList.remove('active');
+  }
+  function showBack(){
+    inner.classList.add('flipped');
+    btnBack.classList.add('active');
+    btnFront.classList.remove('active');
+  }
+  btnFront.addEventListener('click', showFront);
+  btnBack.addEventListener('click', showBack);
+</script>
+</body>
+</html>
