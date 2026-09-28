@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Card Maker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0d;color:#eee;font-family:system-ui,'Segoe UI',sans-serif;padding:0 14px 90px;max-width:560px;margin:auto}
+h1{font-size:19px;margin:12px 0 8px;color:#e6c88a}
+.row2,.tabs,.acts,.dz{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tab,button{padding:8px 13px;border-radius:20px;border:1px solid #6b5a2e;background:#17140d;color:#e6c88a;font-size:13px;cursor:pointer;font-family:inherit}
+.tab.on,button.main,button.on{background:linear-gradient(135deg,#f6e3ac,#cda458,#8a6a2e);color:#241708;font-weight:600;border-color:transparent}
+label{display:block;font-size:11px;color:#b9a774;margin:10px 0 3px;letter-spacing:.06em;text-transform:uppercase}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #3a3320;background:#15130c;color:#fff;font-size:14px}
+.dz select{flex:1;min-width:0}
+.scr{display:none}.scr.on{display:block}
+#pv{position:sticky;top:0;z-index:5;background:#0b0b0d;padding:6px 0 8px}
+.sides{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
+#wrap,.th{overflow:hidden}
+#card{transform-origin:top left}
+#card [data-drag]{cursor:grab}
+body:not(.view) #card [data-drag]{touch-action:none}
+.box{background:#121009;border:1px solid #2c2614;border-radius:12px;padding:4px 12px 12px;margin-top:12px}
+.box h3{font-size:13px;color:#e6c88a;margin:10px 0 0}
+#hint,.muted{font-size:12px;color:#8a8a8a;margin-top:10px;text-align:center}
+#cr{color:#8a8a8a;font-size:11px;text-align:center;margin:22px 0 6px}
+.ci{background:#121009;border:1px solid #2c2614;border-radius:12px;padding:10px;margin-top:12px}
+.ci .th{border-radius:10px;margin-bottom:8px}
+.ci b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nav{position:fixed;left:0;right:0;bottom:0;background:#100e08;border-top:1px solid #3a3320;display:flex;justify-content:center;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));z-index:9}
+#nav button{flex:1;max-width:170px;border-radius:12px}
+.view .edit,.view #nav,.view .scr:not(#s-create){display:none!important}
+#mk{display:none;text-align:center;margin-top:10px}
+.view #mk{display:block}#mk a{color:#e6c88a;font-size:12px}
+
+/* ===== built-in card styles ===== */
+.c{width:480px;height:270px;position:relative;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,'Segoe UI',sans-serif;padding:22px 26px;border-radius:18px}
+.c .t{font-size:22px;font-weight:700;line-height:1.15}
+.c .s{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);margin-top:4px}
+.c .rows{margin:12px 112px 0 0}.c .rows.nq{margin-right:0}
+.c .row{display:flex;gap:8px;font-size:12px;margin-top:5px;word-break:break-word}
+.c .row b{color:var(--ac);font-weight:600;min-width:74px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding-top:2px}
+.c .qr{position:absolute;right:24px;bottom:34px;width:86px;height:86px;background:#fff;padding:5px;border-radius:8px;border:3px solid var(--ac)}
+.c .ft{position:absolute;left:26px;bottom:12px;font-size:9px;color:var(--mut);opacity:.85}
+.L-classic{box-shadow:inset 0 0 0 6px var(--ac),inset 0 0 0 7px rgba(0,0,0,.35);padding:26px 32px}
+.L-split::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:var(--ac)}
+.L-split .t{font-size:26px}
+.L-centered .hd{text-align:center}
+.L-centered .rows{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.L-centered .qr{width:76px;height:76px}
+.L-minimal{border-top:5px solid var(--ac)}
+.L-minimal .t{text-transform:uppercase;letter-spacing:.12em;font-size:19px}
+.L-bold .hd{margin:-22px -26px 4px;padding:18px 26px;background:var(--ac);color:var(--on)}
+.L-bold .s{color:var(--on);opacity:.75}
+</style>
+</head>
+<body>
+
+<!-- ============ CREATE ============ -->
+<div class="scr on" id="s-create">
+ <h1>Card Maker</h1>
+ <div id="pv">
+  <div class="sides"><button id="sf" class="on">Front Side</button><button id="sb">Back Side</button></div>
+  <div id="wrap"><div id="card"></div></div>
+ </div>
+ <div id="mk"><a id="mka" href="">✨ Make your own card</a></div>
+
+ <div class="edit">
+  <div class="tabs" style="margin-top:8px" id="tabs"></div>
+  <div class="box"><h3 id="fh"></h3><div id="form"></div></div>
+  <div class="box">
+   <label>Theme section</label><div class="tabs" id="secs"></div>
+   <label>Theme</label>
+   <div class="dz"><button id="prev">◀</button><select id="dsel"></select><button id="next">▶</button><button id="rnd">🎲</button></div>
+   <label>Layout</label><select id="lsel"></select>
+   <label>Card shape</label><select id="ssel"></select>
+  </div>
+  <div class="acts" style="margin-top:12px"><button class="main" id="sv">Save card</button><button id="dl">Download PNG</button><button id="rst">Reset layout</button><button id="lk">Quick link</button></div>
+  <div id="lnk"></div>
+  <div id="hint"></div>
+ </div>
+</div>
+
+<!-- ============ MY CARDS ============ -->
+<div class="scr" id="s-cards"><h1>My Cards</h1><div id="clist"></div></div>
+
+<!-- ============ ACCOUNT ============ -->
+<div class="scr" id="s-acct"><h1>Account</h1><div class="box" id="acct" style="padding:12px"></div></div>
+
+<div id="cr">© 2026 Bolti Yaadein — सर्वाधिकार सुरक्षित (All Rights Reserved)</div>
+<div id="nav"><button id="n-create" class="on">✏️ Create</button><button id="n-cards">🗂 My Cards</button><button id="n-acct">👤 Account</button></div>
+<style id="cstyle"></style>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="custom-designs.js"></script>
+<script>
+const SB_URL='';   // <-- Supabase Project URL yahan paste karo
+const SB_KEY='';   // <-- Supabase anon public key yahan paste karo
+const $=s=>document.querySelector(s);
+
+/* ===== CARD TYPES: [key,label,isRow] ===== */
+const TYPES={
+ business:{label:'Business',t:'name',s:'tag',
+  F:[['name','Business name'],['tag','Tagline'],['owner','Owner',1],['phone','Phone',1],['email','Email',1],['web','Website',1],['addr','Address',1],['social','Social',1],['footer','Footer note']],
+  B:[['b_title','Back heading'],['b1','Services',1],['b2','Timings',1],['b3','WhatsApp',1],['b4','Instagram',1],['b5','YouTube / Facebook',1],['b6','GST / Reg. No',1],['upi','UPI ID',1],['b8','Note',1]]},
+ payment:{label:'Payment',t:'name',s:'tag',
+  F:[['name','Account holder / Business'],['tag','Subtitle'],['acc','Account No',1],['ifsc','IFSC',1],['branch','Branch',1],['bank','Bank name',1],['phone','Contact',1],['footer','Footer note']],
+  B:[['b_title','Back heading'],['upi','UPI ID',1],['b1','Contact & Help',1],['b2','Email',1],['b3','Website / Social',1],['b4','Note 1',1],['b5','Note 2',1],['b6','Instructions',1],['b7','Extra',1]]},
+ profile:{label:'Profile',t:'name',s:'role',
+  F:[['name','Full name'],['role','Role / Title'],['bio','Bio',1],['phone','Phone',1],['email','Email',1],['social','Instagram / Social',1],['web','Website',1],['footer','Footer note']],
+  B:[['b_title','Back heading'],['b1','About',1],['b2','Skills',1],['b3','Location',1],['b4','WhatsApp',1],['b5','YouTube',1],['b6','Portfolio',1],['b7','Quote',1]]}
+};
+function qrText(sd,v,T){
+ if(sd==='back'&&v.upi)return 'upi://pay?pa='+v.upi+'&pn='+encodeURIComponent(v.name||'');
+ if(sd==='front'&&v.web&&/^https?:/.test(v.web))return v.web;
+ return (sd==='back'?T.B:T.F).filter(f=>f[2]&&v[f[0]]).map(f=>f[1]+': '+v[f[0]]).join('\n');
+}
+
+/* ===== THEMES: [name,bg,text,accent,muted,on-accent] ===== */
+/* --- Section 1: CLASSIC (original themes, unchanged) --- */
+const P=[
+ ['Burgundy Gold','radial-gradient(120% 140% at 15% 0,#5a1420,#1c0509)','#fbf7ee','#e6c88a','#d9c9a8','#2a1208'],
+ ['Midnight Silver','linear-gradient(150deg,#14233f,#050a14)','#f1f5fb','#c9d3e3','#9fb0c8','#0a1220'],
+ ['Emerald Gold','linear-gradient(150deg,#0d5a46,#03201a)','#f4fbf6','#e6c88a','#b7d8c6','#0a2a20'],
+ ['Graphite Gold','linear-gradient(150deg,#2f2f34,#08080a)','#f5f5f5','#e0b84f','#b5b5b5','#1a1405'],
+ ['Royal Purple','linear-gradient(150deg,#41207a,#12042b)','#f7f1ff','#f0c96a','#c8b5e6','#1e0a3a'],
+ ['Rose Gold','linear-gradient(150deg,#43232e,#150a0f)','#fff4f0','#f0b7a4','#d9b3a6','#2a120c'],
+ ['Ocean Teal','linear-gradient(150deg,#0b6673,#032a31)','#effcfc','#7fe0d4','#a5d8d6','#032a31'],
+ ['Sunset','linear-gradient(150deg,#8a3212,#2a0c04)','#fff6ec','#ffc36b','#e6c3a0','#2a0c04'],
+ ['Ivory Classic','#f7f1e3','#2b2216','#a67c1e','#6b5a3a','#fff8e6'],
+ ['Pearl Blue','#eef4fb','#0f2440','#1f5fbf','#587293','#ffffff'],
+ ['Forest Sand','linear-gradient(150deg,#2c3a25,#0f150c)','#f3f1e6','#d8c18a','#b9b79a','#1b220f'],
+ ['Crimson Black','linear-gradient(150deg,#b3122b,#160207)','#fff5f5','#ffd9a0','#f1b8bd','#3a0710'],
+ ['Ruby Silver','linear-gradient(150deg,#7a0f2a,#1a0309)','#ffffff','#d7dbe4','#e3b4c0','#2a0a12'],
+ ['Deep Ocean Gold','linear-gradient(150deg,#0a2a5c,#020a1f)','#f4f8ff','#f2cf7a','#a9bde0','#1a1405']
+];
+/* --- Section 2: COLOURFUL (colour x black, colour + colour) --- */
+const C=[['Burgundy','#7a0f2a','#f3b8c6'],['Blue','#0d3b8e','#a9c8ff'],['Purple','#5a2a9a','#d5b8ff'],['Emerald','#0b7a5a','#a6f0d0'],
+ ['Teal','#0b7f8a','#9ff0f5'],['Orange','#c2560f','#ffcf9a'],['Pink','#b3246b','#ffb3d9'],['Crimson','#b3122b','#ffb3bd'],
+ ['Indigo','#2b2f8f','#b8bcff'],['Gold','#8a6a1e','#ffe39a'],['Olive','#5a6b1a','#e0efa0'],['Cyan','#0a6fa8','#a8e4ff']];
+const Q=[];
+C.forEach(c=>Q.push([c[0]+' × Black',`linear-gradient(135deg,${c[1]} 0%,#000 100%)`,'#ffffff',c[2],'#d0d0d0','#100c10']));
+[2,4,6,8].forEach(k=>C.forEach((a,i)=>{const b=C[(i+k)%C.length];
+ Q.push([a[0]+' + '+b[0],`linear-gradient(135deg,${a[1]} 0%,#000 50%,${b[1]} 100%)`,'#ffffff',a[2],'#d0d0d0','#100c10'])}));
+/* --- Section 3: COLOURFUL (vivid, no black: pair, aurora, glow, split, spotlight, pastel) --- */
+const V=[['Burgundy','#a3153c','#ffc2d1','#5a0a20'],['Blue','#1f6bff','#c4dcff','#0a2f7a'],['Purple','#8a3ffc','#e3d0ff','#3d1478'],['Emerald','#12b886','#c3fae8','#065c44'],
+ ['Teal','#15aabf','#c5f6fa','#0a5866'],['Orange','#ff7a1a','#ffe0c2','#7a3200'],['Pink','#f0428f','#ffd0e6','#7a1445'],['Crimson','#e0243c','#ffd0d6','#6b0a18'],
+ ['Indigo','#4c4fe0','#d0d2ff','#1a1c6b'],['Gold','#f2b01e','#fff0c2','#7a5200'],['Lime','#82c91e','#e6fbc2','#3d5f08'],['Cyan','#22b8ff','#cdf0ff','#0a5580']];
+const LU=h=>{const n=parseInt(h.slice(1),16);return(.299*(n>>16)+.587*((n>>8)&255)+.114*(n&255))/255};
+const cp=(name,bg,st,a)=>{const lt=st.reduce((t,h)=>t+LU(h),0)/st.length>.6;return[name,bg,lt?'#14141c':'#ffffff',lt?a[3]:a[2],lt?'#3a3a4a':'#e8e8f0',lt?'#ffffff':'#14141c']};
+const R=[];
+[3,5,7].forEach(k=>V.forEach((a,i)=>{const b=V[(i+k)%12];R.push(cp(a[0]+' → '+b[0],`linear-gradient(135deg,${a[1]},${b[3]})`,[a[1],b[3]],a))}));
+[4,8].forEach(k=>V.forEach((a,i)=>{const b=V[(i+k)%12],c=V[(i+2*k)%12];R.push(cp(a[0]+' · '+b[0]+' · '+c[0]+' Aurora',`linear-gradient(120deg,${a[1]},${b[1]} 50%,${c[3]})`,[a[1],b[1],c[3]],a))}));
+V.forEach((a,i)=>{const b=V[(i+6)%12];R.push(cp(a[0]+' Glow',`radial-gradient(circle at 20% 15%,${a[1]} 0%,${b[3]} 80%)`,[a[1],b[3],b[3]],a))});
+V.forEach((a,i)=>{const b=V[(i+2)%12];R.push(cp(a[0]+' | '+b[0]+' Split',`linear-gradient(115deg,${a[3]} 55%,${b[1]} 55%)`,[a[3],a[3],b[1]],a))});
+V.forEach((a,i)=>{const b=V[(i+4)%12],c=V[(i+8)%12];R.push(cp(a[0]+' Spotlight',`radial-gradient(circle at 85% 15%,${b[1]} 0%,rgba(0,0,0,0) 50%),linear-gradient(135deg,${a[1]},${c[3]})`,[a[1],b[1],c[3]],a))});
+V.forEach((a,i)=>{const b=V[(i+5)%12];R.push(cp(a[0]+' / '+b[0]+' Pastel',`linear-gradient(135deg,${a[2]},${b[2]})`,[a[2],b[2]],a))});
+const LN=['Classic','Split','Centered','Minimal','Bold'];
+const mk=(p,sec,ly)=>({sec,name:p[0]+(sec==='Classic'?' · '+LN[ly]:''),ly:sec==='Classic'?ly:undefined,vars:`--bg:${p[1]};--fg:${p[2]};--ac:${p[3]};--mut:${p[4]};--on:${p[5]}`});
+/* Classic = every original theme x every layout (14 x 5 = 70), Dark Mix = colour+black, Colourful = vivid */
+const THEMES=[];
+P.forEach(p=>LN.forEach((n,l)=>THEMES.push(mk(p,'Classic',l))));
+Q.forEach(p=>THEMES.push(mk(p,'Dark Mix')));
+R.forEach(p=>THEMES.push(mk(p,'Colourful')));
+(window.CUSTOM_DESIGNS||[]).forEach(d=>THEMES.push({sec:'Custom',name:d.name,custom:d}));
+$('#cstyle').textContent=(window.CUSTOM_DESIGNS||[]).map(d=>d.css||'').join('\n');
+const SECS=['Classic','Colourful','Dark Mix'].concat(window.CUSTOM_DESIGNS&&window.CUSTOM_DESIGNS.length?['Custom']:[]);
+const LAY=['Classic frame','Side band','Centered','Minimal line','Bold header'],LCLS=['classic','split','centered','minimal','bold'];
+const SKEL='<div class="c L-LAY"><div class="hd"><div class="t" data-field="title"></div><div class="s" data-field="subtitle"></div></div><div class="rows" data-rows></div><div class="qr" data-qr></div><div class="ft" data-field="footer"></div></div>';
+const SHAPES=[['Rounded','18px'],['Sharp','0'],['Soft Large','44px'],['Leaf','48px 6px 48px 6px'],['Pill','90px'],['Squircle','28px 90px 28px 90px']];
+const themeIdx=n=>{let i=THEMES.findIndex(d=>d.name===n);if(i<0)i=THEMES.findIndex(d=>d.name.startsWith(n+' ·'));return i<0?0:i};
+
+/* ===== STATE ===== */
+let type='business',idx=0,lay=0,shape=0,side='front',S=1,view=false,cardId=null,user=null,mine=[];
+let vals={name:'Your Name',tag:'Your tagline',phone:'+91 98XXXXXXXX',email:'you@example.com',b_title:'More Details'},pos={};
+const dsel=$('#dsel');
+LAY.forEach((l,i)=>$('#lsel').add(new Option(l,i)));
+SHAPES.forEach((s,i)=>$('#ssel').add(new Option(s[0],i)));
+$('#hint').textContent=THEMES.length+' themes × '+LAY.length+' layouts × '+SHAPES.length+' shapes. Card par text / QR ko ungli se drag karke jagah badal sakte ho.';
+const debounce=(f,ms)=>{let t;return()=>{clearTimeout(t);t=setTimeout(f,ms)}};
+const live=debounce(()=>build(),120);
+const secOf=()=>THEMES[idx].sec;
+const inSec=()=>THEMES.map((d,i)=>i).filter(i=>THEMES[i].sec===secOf());
+
+/* ===== render one card into any element (used by editor + My Cards thumbnails) ===== */
+function renderCard(card,d,sd,edit){
+ const T=TYPES[d.t]||TYPES.business,th=THEMES[themeIdx(d.dn)],v={},src=d.v||{},p=d.p||{};
+ [...T.F,...T.B].forEach(f=>v[f[0]]=(src[f[0]]||'').trim());
+ const bk=sd==='back',list=bk?T.B:T.F;
+ card.innerHTML=th.custom?th.custom.html:SKEL.replace('LAY',LCLS[d.ly||0]);
+ card.style.cssText=th.custom?(th.custom.vars||''):th.vars;
+ card.firstElementChild.style.borderRadius=SHAPES[d.sh||0][1];
+ const map={title:bk?v.b_title:v[T.t],subtitle:bk?'':v[T.s],footer:bk?'':v.footer};
+ card.querySelectorAll('[data-field]').forEach(e=>{e.textContent=map[e.dataset.field]||'';e.dataset.k=e.dataset.field});
+ const rows=card.querySelector('[data-rows]');
+ if(rows){rows.innerHTML='';list.filter(f=>f[2]&&v[f[0]]).forEach(f=>{const r=document.createElement('div');r.className='row';r.dataset.k='r'+f[0];
+  r.innerHTML='<b></b><span></span>';r.firstChild.textContent=f[1];r.lastChild.textContent=v[f[0]];rows.appendChild(r)})}
+ const q=card.querySelector('[data-qr]'),txt=qrText(sd,v,T);
+ if(q){q.dataset.k='qr';if(txt&&window.QRCode){QRCode.toDataURL(txt,{margin:0,width:220,errorCorrectionLevel:'M'},(e,u)=>{if(!e)q.innerHTML='<img src="'+u+'" style="width:100%;height:100%;display:block;pointer-events:none">'})}
+  else{q.remove();if(rows)rows.classList.add('nq')}}
+ card.querySelectorAll('[data-k]').forEach(e=>{const o=p[sd+e.dataset.k];if(o)e.style.transform='translate('+o[0]+'px,'+o[1]+'px)';
+  if(edit){e.dataset.drag=1;e.onpointerdown=ev=>drag(ev,e)}});
+}
+const pack=()=>({t:type,dn:THEMES[idx].name,ly:lay,sh:shape,v:vals,p:pos});
+function scale(){const w=$('#wrap');S=Math.min(1,w.clientWidth/480);$('#card').style.transform='scale('+S+')';w.style.height=(270*S)+'px'}
+function build(){renderCard($('#card'),pack(),side,!view);scale()}
+function drag(ev,e){ev.preventDefault();e.setPointerCapture(ev.pointerId);const key=side+e.dataset.k,b=pos[key]||[0,0],sx=ev.clientX,sy=ev.clientY;
+ e.onpointermove=m=>{const p=[b[0]+(m.clientX-sx)/S,b[1]+(m.clientY-sy)/S];pos[key]=p;e.style.transform='translate('+p[0]+'px,'+p[1]+'px)'};
+ e.onpointerup=()=>{e.onpointermove=null;e.onpointerup=null}}
+
+/* ===== editor UI ===== */
+function drawTabs(){const t=$('#tabs');t.innerHTML='';Object.keys(TYPES).forEach(k=>{const b=document.createElement('button');
+ b.className='tab'+(k===type?' on':'');b.textContent=TYPES[k].label+' card';b.onclick=()=>{type=k;pos={};drawTabs();drawForm();build()};t.appendChild(b)})}
+function drawForm(){const f=$('#form');f.innerHTML='';$('#fh').textContent=side==='back'?'Back side ki details':'Front side ki details';
+ TYPES[type][side==='back'?'B':'F'].forEach(x=>{const l=document.createElement('label');l.textContent=x[1];const i=document.createElement('input');
+  i.value=vals[x[0]]||'';i.oninput=()=>{vals[x[0]]=i.value;live()};f.append(l,i)})}
+function drawSecs(){const t=$('#secs');t.innerHTML='';SECS.forEach(s=>{const b=document.createElement('button');b.className='tab'+(s===secOf()?' on':'');
+ b.textContent=s+' ('+THEMES.filter(d=>d.sec===s).length+')';b.onclick=()=>{const f=THEMES.findIndex(d=>d.sec===s);pick(f)};t.appendChild(b)});
+ dsel.length=0;inSec().forEach(i=>dsel.add(new Option(THEMES[i].name,i)));dsel.value=idx}
+function pick(i){idx=i;if(THEMES[i].ly!==undefined){lay=THEMES[i].ly;$('#lsel').value=lay}drawSecs();build()}
+function step(n){const l=inSec(),p=l.indexOf(idx);pick(l[(p+n+l.length)%l.length])}
+function setSide(s){side=s;$('#sf').classList.toggle('on',s==='front');$('#sb').classList.toggle('on',s==='back');if(!view)drawForm();build()}
+function apply(o){type=o.t||'business';lay=o.ly||0;shape=o.sh||0;vals=o.v||{};pos=o.p||{};idx=themeIdx(o.dn);$('#lsel').value=lay;$('#ssel').value=shape}
+function fresh(){cardId=null;pos={};$('#lnk').innerHTML='';}
+
+/* ===== share ===== */
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))));
+const base=()=>location.origin+location.pathname;
+function showLink(u,note){const b=$('#lnk');b.innerHTML='<label>'+note+'</label><input readonly>';const i=b.querySelector('input');i.value=u;i.onclick=()=>i.select();try{navigator.clipboard.writeText(u)}catch(e){}}
+$('#lk').onclick=()=>showLink(base()+'#v='+enc(pack()),'Quick link (details link ke andar hain; badloge to naya link banega)');
+
+/* ===== Supabase ===== */
+const sb=(SB_URL&&SB_KEY&&window.supabase)?supabase.createClient(SB_URL,SB_KEY):null;
+const login=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:base()}});
+function loginBox(msg){const d=document.createElement('div');d.className='box';d.style.padding='14px';
+ d.innerHTML='<p style="margin:4px 0 12px;font-size:13px;color:#b9a774"></p>';d.firstChild.textContent=msg;
+ if(sb){const b=document.createElement('button');b.className='main';b.textContent='Login with Google';b.onclick=login;d.appendChild(b)}
+ else d.firstChild.textContent='Login abhi band hai: file ke upar SB_URL aur SB_KEY daalo.';return d}
+function drawAcct(){const a=$('#acct');a.innerHTML='';
+ if(!user){a.appendChild(loginBox('Google se login karke apne cards save karo aur apna permanent link pao.'));a.style.padding='0';a.style.border='0';return}
+ a.style.padding='12px';a.style.border='';a.innerHTML='<div style="font-size:13px;margin-bottom:10px"></div><button id="lo">Logout</button>';
+ a.firstChild.textContent=user.email;$('#lo').onclick=()=>sb.auth.signOut()}
+async function loadMine(){if(!sb||!user)return;const {data}=await sb.from('cards').select('id,title,data').order('updated_at',{ascending:false});mine=data||[]}
+async function drawCards(){const l=$('#clist');l.innerHTML='';
+ if(!user){l.appendChild(loginBox('My Cards dekhne ke liye Google se login karo.'));return}
+ await loadMine();
+ const nb=document.createElement('button');nb.className='main';nb.textContent='+ Naya card banao';nb.onclick=()=>{fresh();go('create')};l.appendChild(nb);
+ if(!mine.length){const m=document.createElement('div');m.className='muted';m.textContent='Abhi koi saved card nahi hai.';l.appendChild(m)}
+ mine.forEach(c=>{const it=document.createElement('div');it.className='ci';
+  it.innerHTML='<div class="th"><div></div></div><div class="row2"><b></b><button>Edit</button><button>Copy link</button><button>Delete</button></div><div class="lk muted"></div>';
+  it.querySelector('b').textContent=c.title||'Untitled';l.appendChild(it);
+  const th=it.querySelector('.th'),k=th.firstChild;renderCard(k,c.data,'front',false);
+  const s=th.clientWidth/480;k.style.transformOrigin='top left';k.style.transform='scale('+s+')';th.style.height=(270*s)+'px';
+  const [be,bc,bd]=it.querySelectorAll('button');
+  be.onclick=()=>{cardId=c.id;apply(c.data);$('#lnk').innerHTML='';drawTabs();drawForm();drawSecs();build();go('create')};
+  bc.onclick=()=>{const u=base()+'?c='+c.id;it.querySelector('.lk').textContent=u;try{navigator.clipboard.writeText(u)}catch(e){}};
+  bd.onclick=async()=>{if(confirm('Ye card delete karna hai?')){await sb.from('cards').delete().eq('id',c.id);if(cardId===c.id)fresh();drawCards()}}})}
+$('#sv').onclick=async()=>{
+ if(!sb||!user){alert('Card save karne ke liye pehle Google se login karo.');go('acct');return}
+ const title=(vals.name||'Card').trim(),data=pack();let err;
+ if(cardId){({error:err}=await sb.from('cards').update({title,data,updated_at:new Date().toISOString()}).eq('id',cardId))}
+ else{const r=await sb.from('cards').insert({title,data}).select('id').single();err=r.error;if(r.data)cardId=r.data.id}
+ if(err){alert('Save nahi hua: '+err.message);return}
+ showLink(base()+'?c='+cardId,'Saved ✓ Tumhara permanent link (bio mein lagao; badal ke dobara Save karoge to yahi link update hoga)')};
+
+/* ===== app navigation ===== */
+function go(t){['create','cards','acct'].forEach(k=>{$('#s-'+k).classList.toggle('on',k===t);$('#n-'+k).classList.toggle('on',k===t)});
+ if(t==='cards')drawCards();if(t==='acct')drawAcct();if(t==='create')scale();scrollTo(0,0)}
+['create','cards','acct'].forEach(k=>$('#n-'+k).onclick=()=>go(k));
+
+/* ===== controls ===== */
+dsel.onchange=()=>pick(+dsel.value);$('#lsel').onchange=e=>{lay=+e.target.value;build()};$('#ssel').onchange=e=>{shape=+e.target.value;build()};
+$('#prev').onclick=()=>step(-1);$('#next').onclick=()=>step(1);
+$('#rnd').onclick=()=>{const l=inSec();pick(l[Math.floor(Math.random()*l.length)])};
+$('#rst').onclick=()=>{pos={};build()};
+$('#sf').onclick=()=>setSide('front');$('#sb').onclick=()=>setSide('back');
+$('#mka').href=base();
+$('#dl').onclick=async()=>{
+ const w=document.createElement('div');w.style.cssText='position:fixed;left:-9999px;top:0';
+ const c=$('#card').cloneNode(true);c.style.transform='none';w.appendChild(c);document.body.appendChild(w);
+ const cv=await html2canvas(c.firstElementChild,{scale:3,backgroundColor:null});w.remove();
+ const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='card-'+side+'.png';a.click()};
+addEventListener('resize',scale);
+
+/* ===== start ===== */
+(async()=>{
+ const cid=new URLSearchParams(location.search).get('c');
+ if(/^#v=/.test(location.hash)){try{apply(dec(location.hash.slice(3)));view=true}catch(e){}}
+ else if(cid&&sb){view=true;const {data}=await sb.rpc('get_card',{card_id:cid});if(data)apply(data)}
+ if(view)document.body.classList.add('view');
+ $('#lsel').value=lay;$('#ssel').value=shape;
+ drawTabs();drawForm();drawSecs();build();
+ if(sb&&!view){const {data}=await sb.auth.getSession();user=data.session?data.session.user:null;
+  sb.auth.onAuthStateChange((_e,s)=>{const u=s?s.user:null;if((u&&u.id)!==(user&&user.id)){user=u;drawAcct();if($('#s-cards').classList.contains('on'))drawCards()}})}
+})();
+</script>
+</body>
+</html>
